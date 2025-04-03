@@ -1,0 +1,92 @@
+**Project Name:** IronRank
+
+**Description:**
+IronRank is a web application designed to track and rank users' strength training progress based on their Squat, Bench Press, and Deadlift (SBD) performance relative to their body weight. Users input their lift weights and body weight, and the app calculates a score, assigning them a rank (e.g., Wood, Bronze, Silver, Gold, etc.) and displaying their progress visually through graphs and leaderboards.
+
+**Key Features:**
+
+* **User Authentication:** Secure login with Google Sign-In via Firebase Authentication.
+* **Data Input:** Simple form to enter SBD weights and body weight.
+* **Score Calculation:** Calculates a score based on entered lift weights and body weight.
+* **Ranking System:** Assigns a rank based on the calculated score, with visual representation.
+* **Leaderboards:** Displays rankings for individual lifts and overall score.
+* **Progress Tracking:** Visualizes progress over time with graphs.
+* **User Profiles:** Stores user data and lift history.
+
+**Tech Stack:**
+
+* **Frontend:** React, Tailwind CSS, Chart.js
+* **Backend:** Firebase (Authentication, Firestore)
+
+**Text UML (Simplified):**
+
+Classes:
+
+User
+
+userId (PK, String)
+username (String)
+email (String)
+bodyWeight (Float)
+LiftRecord
+
+recordId (PK, String)
+userId (FK, String)
+squatWeight (Float)
+benchWeight (Float)
+deadliftWeight (Float)
+date (Date)
+Ranking
+
+rankId (PK, String)
+rankName (String)
+scoreThreshold (Float)
+Methods:
+
+UserService
+
+createUser(user: User): User
+getUser(userId: String): User
+LiftRecordService
+
+createLiftRecord(record: LiftRecord): LiftRecord
+getLiftRecords(userId: String): LiftRecord[]
+RankingService
+
+calculateScore(liftRecord: LiftRecord, bodyWeight: Float): Float
+getRank(score: Float): Ranking
+LeaderboardService
+
+getLeaderboard(liftType: String): User[] // liftType: "squat", "bench", "deadlift", "total"
+Components (React):
+
+InputForm
+
+Inputs for SBD weights, body weight
+Submit button
+RankingDisplay
+
+Displays user's rank and score
+Leaderboard
+
+Displays leaderboard for selected lift type
+ProgressGraph
+
+Displays progress graph for selected lift type
+UserDashboard
+
+Combines InputForm, RankingDisplay, Leaderboard, ProgressGraph
+
+**Workflow:**
+
+1.  User signs in with Google via Firebase Authentication.
+2.  User inputs their SBD weights and body weight through the input form.
+3.  The app calculates a score based on the input data.
+4.  The app determines the user's rank based on the calculated score.
+5.  The app displays the user's rank, score, and progress through graphs and leaderboards.
+6.  User lift data is stored in Firestore for future access.
+
+
+
+
+
