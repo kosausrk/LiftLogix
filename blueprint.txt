@@ -90,3 +90,162 @@ Combines InputForm, RankingDisplay, Leaderboard, ProgressGraph
 
 
 
+
+
+
+basic working app 
+Alright, let's outline the steps to go from a boilerplate React app with Firebase setup to a basic, running "IronRank" app:
+
+**Phase 1: Project Setup & Firebase Integration**
+
+1.  **Create React App:**
+    ```bash
+    npx create-react-app ironrank
+    cd ironrank
+    ```
+
+2.  **Install Dependencies:**
+    ```bash
+    npm install firebase tailwindcss chart.js axios
+    npx tailwindcss init -p
+    ```
+
+3.  **Configure Tailwind:**
+    * Open `tailwind.config.js` and configure template paths (add `src`):
+        ```javascript
+        module.exports = {
+          content: ["./src/**/*.{js,jsx,ts,tsx}"],
+          theme: {
+            extend: {},
+          },
+          plugins: [],
+        };
+        ```
+    * Add Tailwind directives to `src/index.css`:
+        ```css
+        @tailwind base;
+        @tailwind components;
+        @tailwind utilities;
+        ```
+
+4.  **Firebase Setup:**
+    * Create a Firebase project in the Firebase Console.
+    * Enable Google Sign-In in Firebase Authentication.
+    * Get your Firebase config object from project settings.
+    * Create `src/firebase.js` and initialize Firebase:
+        ```javascript
+        import firebase from 'firebase/app';
+        import 'firebase/auth';
+        import 'firebase/firestore';
+
+        const firebaseConfig = {
+          // Your Firebase config here
+        };
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        export { auth, db };
+        ```
+
+5.  **Basic Authentication (Google Sign-In):**
+    * Create a `src/components/SignIn.js` component:
+        ```javascript
+        import React from 'react';
+        import { auth } from '../firebase';
+
+        function SignIn() {
+          const signInWithGoogle = () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
+          };
+
+          return <button onClick={signInWithGoogle}>Sign in with Google</button>;
+        }
+
+        export default SignIn;
+        ```
+    * Update `src/App.js` to handle user state:
+        ```javascript
+        import React, { useState, useEffect } from 'react';
+        import { auth } from './firebase';
+        import SignIn from './components/SignIn';
+
+        function App() {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            auth.onAuthStateChanged(setUser);
+          }, []);
+
+          return (
+            <div className="p-4">
+              {user ? (
+                <div>
+                  <p>Welcome, {user.displayName}!</p>
+                  <button onClick={() => auth.signOut()}>Sign out</button>
+                </div>
+              ) : (
+                <SignIn />
+              )}
+            </div>
+          );
+        }
+
+        export default App;
+        ```
+
+6.  **Run the App:**
+    ```bash
+    npm start
+    ```
+    * You should now see a "Sign in with Google" button and be able to log in.
+
+**Phase 2: Data Input & Score Calculation**
+
+7.  **Create InputForm Component (`src/components/InputForm.js`):**
+    * Add input fields for SBD weights and body weight.
+    * Add a "Submit" button.
+    * Store input values in component state.
+    * Add function to handle submit that stores data into firestore, and also calculates the score.
+    * Add a function that calls `RankingService.getRank()` and displays rank.
+
+8.  **Create RankingService (`src/services/RankingService.js`):**
+    * Implement `calculateScore()` function (use your chosen formula).
+    * Implement `getRank()` function which returns the rank based on score.
+    * Create the `Ranking` collection in firestore, and add the ranks and their score thresholds.
+
+9.  **Store Data in Firestore:**
+    * Use `db.collection('liftRecords').add()` to store lift records.
+
+10. **Display Rank:**
+    * In the `InputForm` component, after submitting, display the user's rank.
+
+**Phase 3: Displaying Data**
+
+11. **Create Leaderboard Component (`src/components/Leaderboard.js`):**
+    * Fetch lift records from Firestore.
+    * Calculate scores for each user.
+    * Sort users by score.
+    * Display a leaderboard table.
+
+12. **Create ProgressGraph Component (`src/components/ProgressGraph.js`):**
+    * Fetch lift records from Firestore for the current user.
+    * Use Chart.js to create a line graph showing progress over time.
+
+13. **Create UserDashboard Component (`src/components/UserDashboard.js`):**
+    * Combine `InputForm`, `RankingDisplay`, `Leaderboard`, and `ProgressGraph`.
+
+**Key Points:**
+
+* **Error Handling:** Add error handling for Firebase operations.
+* **Styling:** Use Tailwind CSS to style your components.
+* **Data Validation:** Validate user inputs.
+* **Modularize:** Break down your app into smaller, reusable components.
+* **Testing:** Test your components and functions.
+
+This outline provides a step-by-step guide to get your basic "IronRank" app up and running. You can then expand on this foundation to add more features and improve the user experience.
