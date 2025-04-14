@@ -9,6 +9,8 @@ import { auth } from "./firebase";
 import Login from "./components/Login";
 import LiftForm from "./components/LiftForm";
 import UserStats from "./components/UserStats";
+import Leaderboard from "./components/Leaderboard";
+
 
 
 
@@ -26,6 +28,8 @@ function App() {
         <h1 className="text-xl font-bold mb-4">Welcome, {user.displayName}</h1>
         <LiftForm />
         <UserStats />
+        <Leaderboard /> {/* Add the leaderboard component here */}
+
       </>
     ) : (
       <Login />
