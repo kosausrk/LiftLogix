@@ -10,6 +10,8 @@ import Login from "./components/Login";
 import LiftForm from "./components/LiftForm";
 import UserStats from "./components/UserStats";
 import Leaderboard from "./components/Leaderboard";
+import SignOutButton from "./components/SignOutButton";  // Import the SignOutButton component
+
 
 
 
@@ -29,6 +31,8 @@ function App() {
         <LiftForm />
         <UserStats />
         <Leaderboard /> {/* Add the leaderboard component here */}
+        <SignOutButton />  {/* Show the sign-out button when user is logged in */}
+
 
       </>
     ) : (
