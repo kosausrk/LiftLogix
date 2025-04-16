@@ -2,6 +2,7 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import ProgressChart from "./components/ProgressChart"; // at top
 
 
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -30,6 +31,7 @@ function App() {
         <h1 className="text-xl font-bold mb-4">Welcome, {user.displayName}</h1>
         <LiftForm />
         <UserStats />
+        <ProgressChart /> {/* Add this */}
         <Leaderboard /> {/* Add the leaderboard component here */}
         <SignOutButton />  {/* Show the sign-out button when user is logged in */}
 

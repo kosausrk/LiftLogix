@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { auth } from "../firebase";
+
+import { doc, setDoc, collection, addDoc } from "firebase/firestore";
 
 export default function LiftForm() {
   const [squat, setSquat] = useState("");
@@ -37,6 +38,10 @@ export default function LiftForm() {
 
     try {
       await setDoc(doc(db, "users", user.uid), data);
+      //history for lifts 
+      const historyRef = collection(db, "users", user.uid, "liftHistory");
+      await addDoc(historyRef, data);
+
       alert("Lifts updated!");
     } catch (err) {
       console.error("Error saving lifts: ", err);

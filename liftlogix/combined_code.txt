@@ -1,0 +1,488 @@
+-e 
+# === File: ./index.html ===
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+-e 
+# === File: ./vite.config.js ===
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react(),tailwindcss()],
+})-e 
+# === File: ./eslint.config.js ===
+
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+
+export default [
+  { ignores: ['dist'] },
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+]
+-e 
+# === File: ./src/App.css ===
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+-e 
+# === File: ./src/index.css ===
+
+@import "tailwindcss";
+
+
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+.input {
+  @apply border rounded p-2 w-full;
+}
+-e 
+# === File: ./src/components/LiftForm.jsx ===
+
+import { useState } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { auth } from "../firebase";
+
+export default function LiftForm() {
+  const [squat, setSquat] = useState("");
+  const [bench, setBench] = useState("");
+  const [deadlift, setDeadlift] = useState("");
+  const user = auth.currentUser;
+
+  // Adjusted rank thresholds based on typical lbs standards
+  const calculateRank = (total) => {
+    if (total >= 1200) return "Olympian";
+    if (total >= 1000) return "Elite";
+    if (total >= 800) return "Advanced";
+    if (total >= 600) return "Intermediate";
+    return "Wood";
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const s = parseInt(squat);
+    const b = parseInt(bench);
+    const d = parseInt(deadlift);
+    const total = s + b + d;
+    const rank = calculateRank(total);
+
+    const data = {
+      squat: s,
+      bench: b,
+      deadlift: d,
+      total,
+      rank,
+      updatedAt: Date.now(),
+    };
+
+    try {
+      await setDoc(doc(db, "users", user.uid), data);
+      alert("Lifts updated!");
+    } catch (err) {
+      console.error("Error saving lifts: ", err);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label>Squat (lbs)</label>
+        <input
+          type="number"
+          value={squat}
+          onChange={(e) => setSquat(e.target.value)}
+          className="input"
+          required
+        />
+      </div>
+      <div>
+        <label>Bench (lbs)</label>
+        <input
+          type="number"
+          value={bench}
+          onChange={(e) => setBench(e.target.value)}
+          className="input"
+          required
+        />
+      </div>
+      <div>
+        <label>Deadlift (lbs)</label>
+        <input
+          type="number"
+          value={deadlift}
+          onChange={(e) => setDeadlift(e.target.value)}
+          className="input"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+      >
+        Save Lifts
+      </button>
+    </form>
+  );
+}
+-e 
+# === File: ./src/components/Login.jsx ===
+
+import { signInWithPopup } from "firebase/auth";
+import { auth, provider } from "../firebase";
+
+export default function Login() {
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleLogin}
+      className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+    >
+      Sign in with Google
+    </button>
+  );
+}
+-e 
+# === File: ./src/components/Leaderboard.jsx ===
+
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { db } from "../firebase";
+
+export default function Leaderboard() {
+  const [leaderboard, setLeaderboard] = useState([]);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const q = query(
+          collection(db, "users"),
+          orderBy("total", "desc"),
+          limit(10) // Limiting to top 10 users, adjust as needed
+        );
+        const querySnapshot = await getDocs(q);
+        const users = querySnapshot.docs.map((doc) => doc.data());
+        setLeaderboard(users);
+      } catch (error) {
+        console.error("Error fetching leaderboard: ", error);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
+  return (
+    <div className="bg-gray-800 p-4 rounded mt-6">
+      <h2 className="text-xl font-semibold mb-4 text-white">Leaderboard</h2>
+      <ul>
+        {leaderboard.map((user, index) => (
+          <li key={index} className="text-white mb-2">
+            <span className="font-bold">{index + 1}. {user.name}</span> - {user.total} lbs (Rank: {user.rank})
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+-e 
+# === File: ./src/components/SignOutButton.jsx ===
+
+import React from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
+
+export default function SignOutButton() {
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      alert('You have been signed out.');
+    } catch (error) {
+      console.error('Error signing out: ', error);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleSignOut}
+      className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
+    >
+      Sign out
+    </button>
+  );
+}
+-e 
+# === File: ./src/components/UserStats.jsx ===
+
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { auth } from "../firebase";
+
+export default function UserStats() {
+  const [data, setData] = useState(null);
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setData(docSnap.data());
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  if (!user) return <p>Loading user...</p>;
+  if (!data) return <p>Loading stats...</p>;
+
+  return (
+    <div className="bg-emerald-600 p-4 rounded mt-6">
+      <h2 className="text-lg font-semibold mb-2">Your Stats</h2>
+      <p>🛋 Bench: {data.bench} lbs</p>
+      <p>🏋️‍♂️ Squat: {data.squat} lbs</p>
+      <p>💀 Deadlift: {data.deadlift} lbs</p>
+      <p>⚖️ Total: {data.total} lbs</p>
+      <p>🏅 Rank: <strong>{data.rank}</strong></p>
+    </div>
+  );
+}
+-e 
+# === File: ./src/main.jsx ===
+
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+-e 
+# === File: ./src/App.jsx ===
+
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
+
+
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "./firebase";
+import Login from "./components/Login";
+import LiftForm from "./components/LiftForm";
+import UserStats from "./components/UserStats";
+import Leaderboard from "./components/Leaderboard";
+import SignOutButton from "./components/SignOutButton";  // Import the SignOutButton component
+
+
+
+
+
+
+
+function App() {
+  const [count, setCount] = useState(0)
+  const [user] = useAuthState(auth);
+
+
+  return (
+    <div className="p-4 max-w-md mx-auto">
+    {user ? (
+      <>
+        <h1 className="text-xl font-bold mb-4">Welcome, {user.displayName}</h1>
+        <LiftForm />
+        <UserStats />
+        <Leaderboard /> {/* Add the leaderboard component here */}
+        <SignOutButton />  {/* Show the sign-out button when user is logged in */}
+
+
+      </>
+    ) : (
+      <Login />
+    )}
+  </div>
+
+  )
+}
+
+export default App
+-e 
+# === File: ./src/firebase.js ===
+
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const provider = new GoogleAuthProvider();
+export const db = getFirestore(app);
