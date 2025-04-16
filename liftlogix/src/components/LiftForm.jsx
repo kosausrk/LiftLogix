@@ -28,6 +28,8 @@ export default function LiftForm() {
     const rank = calculateRank(total);
 
     const data = {
+      name: user.displayName, //save name asw 
+
       squat: s,
       bench: b,
       deadlift: d,
