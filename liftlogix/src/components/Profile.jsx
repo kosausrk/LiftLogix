@@ -1,33 +1,43 @@
-// ./src/components/Profile.js
-
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { Link } from "react-router-dom"; // If you're using React Router for navigation
 
 export default function Profile() {
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);  // New loading state
+  const [error, setError] = useState(null);  // New error state
   const user = auth.currentUser;
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
-
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setData(docSnap.data());
-      } else {
-        console.log("No such document!");
+      if (!user) {
+        setError("No user is logged in.");
+        setLoading(false);
+        return;
       }
+
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setData(docSnap.data());
+        } else {
+          setError("No profile data found.");
+        }
+      } catch (err) {
+        setError("Failed to load profile data.");
+        console.error("Error fetching profile:", err);
+      }
+      setLoading(false);  // End the loading state
     };
 
     fetchData();
   }, [user]);
 
-  if (!user) return <p>Loading user...</p>;
-  if (!data) return <p>Loading profile data...</p>;
+  // Show loading message or error message
+  if (loading) return <p>Loading your profile...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
@@ -38,13 +48,6 @@ export default function Profile() {
       <p className="text-white">Deadlift: {data.deadlift} lbs</p>
       <p className="text-white">Total: {data.total} lbs</p>
       <p className="text-white">Rank: {data.rank}</p>
-      
-      {/* Optional: Button to edit profile */}
-      <Link to="/edit-profile">
-        <button className="bg-blue-500 text-white p-2 rounded mt-4 hover:bg-blue-600">
-          Edit Profile
-        </button>
-      </Link>
     </div>
   );
 }
