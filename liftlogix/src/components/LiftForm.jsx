@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { db } from "../firebase";
 import { auth } from "../firebase";
-
 import { doc, setDoc, collection, addDoc } from "firebase/firestore";
 
 export default function LiftForm() {
@@ -9,6 +8,13 @@ export default function LiftForm() {
   const [bench, setBench] = useState("");
   const [deadlift, setDeadlift] = useState("");
   const user = auth.currentUser;
+
+  // World record limits (in lbs)
+  const WORLD_RECORDS = {
+    squat: 1200,
+    bench: 1000,
+    deadlift: 1100,
+  };
 
   // Adjusted rank thresholds based on typical lbs standards
   const calculateRank = (total) => {
@@ -19,17 +25,44 @@ export default function LiftForm() {
     return "Wood";
   };
 
+  const validateLifts = (s, b, d) => {
+    // Check if any lift is negative
+    if (s < 0 || b < 0 || d < 0) {
+      return "Lift values cannot be negative.";
+    }
+
+    // Check if any lift exceeds world record limits
+    if (s > WORLD_RECORDS.squat) {
+      return `Squat cannot exceed ${WORLD_RECORDS.squat} lbs (World Record).`;
+    }
+    if (b > WORLD_RECORDS.bench) {
+      return `Bench cannot exceed ${WORLD_RECORDS.bench} lbs (World Record).`;
+    }
+    if (d > WORLD_RECORDS.deadlift) {
+      return `Deadlift cannot exceed ${WORLD_RECORDS.deadlift} lbs (World Record).`;
+    }
+
+    return null; // No errors
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const s = parseInt(squat);
     const b = parseInt(bench);
     const d = parseInt(deadlift);
+
+    // Validate lifts
+    const validationError = validateLifts(s, b, d);
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
     const total = s + b + d;
     const rank = calculateRank(total);
 
     const data = {
-      name: user.displayName, //save name asw 
-
+      displayName: user.displayName,
       squat: s,
       bench: b,
       deadlift: d,
@@ -40,7 +73,7 @@ export default function LiftForm() {
 
     try {
       await setDoc(doc(db, "users", user.uid), data);
-      //history for lifts 
+      // Save history
       const historyRef = collection(db, "users", user.uid, "liftHistory");
       await addDoc(historyRef, data);
 

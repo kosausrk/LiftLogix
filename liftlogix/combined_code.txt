@@ -186,6 +186,199 @@ button:focus-visible {
   @apply border rounded p-2 w-full;
 }
 -e 
+# === File: ./src/components/EditProfile.jsx ===
+
+import { useState, useEffect } from "react";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
+
+export default function EditProfile() {
+  const [formData, setFormData] = useState({
+    displayName: "",
+    squat: "",
+    bench: "",
+    deadlift: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    // Fetch current user data to pre-fill the form
+    if (user) {
+      const fetchData = async () => {
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setFormData(docSnap.data());
+          }
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+        }
+      };
+      fetchData();
+    }
+  }, [user]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const { displayName, squat, bench, deadlift } = formData;
+
+    if (!squat || !bench || !deadlift || !displayName) {
+      setError("Please fill in all fields.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Update user info in Firestore
+      const docRef = doc(db, "users", user.uid);
+      await updateDoc(docRef, { displayName, squat, bench, deadlift });
+
+      // Update user name in Firebase Auth
+      await user.updateProfile({ displayName });
+
+      setLoading(false);
+      alert("Profile updated successfully!");
+    } catch (err) {
+      setError("Failed to update profile.");
+      setLoading(false);
+      console.error("Error updating profile:", err);
+    }
+  };
+
+  return (
+    <div className="bg-gray-800 p-6 rounded-lg">
+      <h2 className="text-2xl font-bold text-white mb-4">Edit Profile</h2>
+      {error && <p className="text-red-500">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="displayName" className="text-white">Name</label>
+          <input
+            type="text"
+            id="displayName"
+            name="displayName"
+            value={formData.displayName}
+            onChange={handleChange}
+            className="mt-1 p-2 w-full rounded-md"
+          />
+        </div>
+        <div>
+          <label htmlFor="squat" className="text-white">Squat (lbs)</label>
+          <input
+            type="number"
+            id="squat"
+            name="squat"
+            value={formData.squat}
+            onChange={handleChange}
+            className="mt-1 p-2 w-full rounded-md"
+          />
+        </div>
+        <div>
+          <label htmlFor="bench" className="text-white">Bench (lbs)</label>
+          <input
+            type="number"
+            id="bench"
+            name="bench"
+            value={formData.bench}
+            onChange={handleChange}
+            className="mt-1 p-2 w-full rounded-md"
+          />
+        </div>
+        <div>
+          <label htmlFor="deadlift" className="text-white">Deadlift (lbs)</label>
+          <input
+            type="number"
+            id="deadlift"
+            name="deadlift"
+            value={formData.deadlift}
+            onChange={handleChange}
+            className="mt-1 p-2 w-full rounded-md"
+          />
+        </div>
+        <button type="submit" className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md" disabled={loading}>
+          {loading ? "Saving..." : "Save Changes"}
+        </button>
+      </form>
+    </div>
+  );
+}
+-e 
+# === File: ./src/components/Profile.jsx ===
+
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
+
+export default function Profile() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);  // New loading state
+  const [error, setError] = useState(null);  // New error state
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) {
+        setError("No user is logged in.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setData(docSnap.data());
+        } else {
+          setError("No profile data found.");
+        }
+      } catch (err) {
+        setError("Failed to load profile data.");
+        console.error("Error fetching profile:", err);
+      }
+      setLoading(false);  // End the loading state
+    };
+
+    fetchData();
+  }, [user]);
+
+  // Show loading message or error message
+  if (loading) return <p>Loading your profile...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+
+  return (
+    <div className="bg-gray-800 p-6 rounded-lg">
+      <h2 className="text-2xl font-bold text-white mb-4">Profile</h2>
+      <p className="text-white">Name: {data.name}</p>
+      <p className="text-white">Squat: {data.squat} lbs</p>
+      <p className="text-white">Bench: {data.bench} lbs</p>
+      <p className="text-white">Deadlift: {data.deadlift} lbs</p>
+      <p className="text-white">Total: {data.total} lbs</p>
+      <p className="text-white">Rank: {data.rank}</p>
+
+
+        {/* Link to EditProfile page */}
+        <Link to="/edit-profile">
+        <button className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md">
+        Edit Profile
+        </button>
+        </Link>
+
+    </div>
+  );
+}
+-e 
 # === File: ./src/components/LiftForm.jsx ===
 
 import { useState } from "react";
@@ -506,6 +699,8 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import ProgressChart from "./components/ProgressChart"; // at top
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+
 
 
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -515,6 +710,8 @@ import LiftForm from "./components/LiftForm";
 import UserStats from "./components/UserStats";
 import Leaderboard from "./components/Leaderboard";
 import SignOutButton from "./components/SignOutButton";  // Import the SignOutButton component
+import Profile from "./components/Profile";  // Import the Profile component
+import EditProfile from "./components/EditProfile";
 
 
 
@@ -528,23 +725,29 @@ function App() {
 
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-    {user ? (
-      <>
-        <h1 className="text-xl font-bold mb-4">Welcome, {user.displayName}</h1>
-        <LiftForm />
-        <UserStats />
-        <ProgressChart /> {/* Add this */}
-        <Leaderboard /> {/* Add the leaderboard component here */}
-        <SignOutButton />  {/* Show the sign-out button when user is logged in */}
+    <Router>
+      <div className="p-4 max-w-md mx-auto">
+        {user ? (
+          <>
+            <h1 className="text-xl font-bold mb-4">Welcome, {user.displayName}</h1>
+            <Profile /> {/* Display profile component */}
 
+            <LiftForm />
+            <UserStats />
+            <ProgressChart /> {/* Add this */}
+            <Leaderboard /> {/* Add the leaderboard component here */}
+            <SignOutButton /> {/* Show the sign-out button when user is logged in */}
 
-      </>
-    ) : (
-      <Login />
-    )}
-  </div>
-
+            {/* Define the routes for Profile and EditProfile */}
+            <Routes>
+              <Route path="/edit-profile" element={<EditProfile />} />
+            </Routes>
+          </>
+        ) : (
+          <Login />
+        )}
+      </div>
+    </Router>
   )
 }
 

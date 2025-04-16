@@ -30,7 +30,7 @@ export default function Leaderboard() {
       <ul>
         {leaderboard.map((user, index) => (
           <li key={index} className="text-white mb-2">
-            <span className="font-bold">{index + 1}. {user.name}</span> - {user.total} lbs (Rank: {user.rank})
+            <span className="font-bold">{index + 1}. {user.displayName}</span> - {user.total} lbs (Rank: {user.rank})
           </li>
         ))}
       </ul>

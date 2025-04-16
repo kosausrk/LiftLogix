@@ -30,6 +30,9 @@ export default function UserStats() {
       <p>💀 Deadlift: {data.deadlift} lbs</p>
       <p>⚖️ Total: {data.total} lbs</p>
       <p>🏅 Rank: <strong>{data.rank}</strong></p>
+
     </div>
+
+
   );
 }
