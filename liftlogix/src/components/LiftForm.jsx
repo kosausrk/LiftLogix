@@ -1,22 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 import { db } from "../firebase";
 import { auth } from "../firebase";
-import { doc, setDoc, collection, addDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, addDoc } from "firebase/firestore";
 
 export default function LiftForm() {
   const [squat, setSquat] = useState("");
   const [bench, setBench] = useState("");
   const [deadlift, setDeadlift] = useState("");
+  const [userDataExists, setUserDataExists] = useState(false);
   const user = auth.currentUser;
 
-  // World record limits (in lbs)
-  const WORLD_RECORDS = {
-    squat: 1200,
-    bench: 1000,
-    deadlift: 1100,
-  };
-
-  // Adjusted rank thresholds based on typical lbs standards
   const calculateRank = (total) => {
     if (total >= 1200) return "Olympian";
     if (total >= 1000) return "Elite";
@@ -25,39 +18,27 @@ export default function LiftForm() {
     return "Wood";
   };
 
-  const validateLifts = (s, b, d) => {
-    // Check if any lift is negative
-    if (s < 0 || b < 0 || d < 0) {
-      return "Lift values cannot be negative.";
-    }
+  useEffect(() => {
+    const checkUserData = async () => {
+      if (!user) return;
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
-    // Check if any lift exceeds world record limits
-    if (s > WORLD_RECORDS.squat) {
-      return `Squat cannot exceed ${WORLD_RECORDS.squat} lbs (World Record).`;
-    }
-    if (b > WORLD_RECORDS.bench) {
-      return `Bench cannot exceed ${WORLD_RECORDS.bench} lbs (World Record).`;
-    }
-    if (d > WORLD_RECORDS.deadlift) {
-      return `Deadlift cannot exceed ${WORLD_RECORDS.deadlift} lbs (World Record).`;
-    }
+      if (docSnap.exists()) {
+        setUserDataExists(true);
+      } else {
+        setUserDataExists(false);
+      }
+    };
 
-    return null; // No errors
-  };
+    checkUserData();
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const s = parseInt(squat);
     const b = parseInt(bench);
     const d = parseInt(deadlift);
-
-    // Validate lifts
-    const validationError = validateLifts(s, b, d);
-    if (validationError) {
-      alert(validationError);
-      return;
-    }
-
     const total = s + b + d;
     const rank = calculateRank(total);
 
@@ -72,8 +53,14 @@ export default function LiftForm() {
     };
 
     try {
-      await setDoc(doc(db, "users", user.uid), data);
-      // Save history
+      // If user data exists, update it; otherwise, create new document
+      if (userDataExists) {
+        await setDoc(doc(db, "users", user.uid), data);
+      } else {
+        await setDoc(doc(db, "users", user.uid), data); // Create new document
+      }
+
+      // Store in liftHistory collection
       const historyRef = collection(db, "users", user.uid, "liftHistory");
       await addDoc(historyRef, data);
 
@@ -84,43 +71,55 @@ export default function LiftForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="max-w-lg mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg">
+    <h2 className="text-2xl font-semibold text-center mb-6">Enter Your Lifts</h2>
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label>Squat (lbs)</label>
+        <label htmlFor="squat" className="block text-lg font-medium text-gray-700">Squat (lbs)</label>
         <input
           type="number"
+          id="squat"
           value={squat}
           onChange={(e) => setSquat(e.target.value)}
-          className="input"
+          className="mt-2 w-full p-4 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
+
       <div>
-        <label>Bench (lbs)</label>
+        <label htmlFor="bench" className="block text-lg font-medium text-gray-700">Bench (lbs)</label>
         <input
           type="number"
+          id="bench"
           value={bench}
           onChange={(e) => setBench(e.target.value)}
-          className="input"
+          className="mt-2 w-full p-4 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
+
       <div>
-        <label>Deadlift (lbs)</label>
+        <label htmlFor="deadlift" className="block text-lg font-medium text-gray-700">Deadlift (lbs)</label>
         <input
           type="number"
+          id="deadlift"
           value={deadlift}
           onChange={(e) => setDeadlift(e.target.value)}
-          className="input"
+          className="mt-2 w-full p-4 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
-      <button
-        type="submit"
-        className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
-      >
-        Save Lifts
-      </button>
+
+      <div className="flex justify-center">
+        <button
+          type="submit"
+          className="mt-6 px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300"
+        >
+          Save Lifts
+        </button>
+      </div>
     </form>
-  );
+  </div>
+);
+
 }
