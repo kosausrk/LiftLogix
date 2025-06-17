@@ -8,3 +8,8 @@ Ranking Tier
 
 
 
+### To Run
+>npm i 
+>npm run dev 
+
+//NEW CHANGE
