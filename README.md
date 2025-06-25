@@ -42,6 +42,7 @@ Still a work in progress
 
 
 ### To Run
->npm i 
->npm run dev 
+npm i 
+
+npm run dev 
 
