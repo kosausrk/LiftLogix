@@ -1,7 +1,7 @@
 # LiftLogix
 LiftLogix is a personal strength tracker and leaderboard web app built with React + Firebase. Users can log Squat, Bench, and Deadlift (SBD) lifts, track progress over time, and see how they rank against others.
 
-**Features**
+## **Features**
 -Firebase Auth: Secure Google Sign-In
 
 -Progress Chart: Visualize your lift progress over time
@@ -14,7 +14,9 @@ LiftLogix is a personal strength tracker and leaderboard web app built with Reac
 
 -Responsive UI: Clean, mobile-friendly design with Tailwind CSS
 
-**Tech Stack**
+
+
+## **Tech Stack**
 -Frontend: React (Vite), Tailwind CSS, React Router
 
 -Auth & DB: Firebase Auth, Firestore
